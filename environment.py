@@ -62,7 +62,7 @@ class FundENV(Env):
         self.value += self.winning
         # update DataFrame of Market
         data_collector = DataCollector()
-        self.df = data_collector.add_SCT_to_df(df=self.df, data=self.value, date=self.timer)
+        self.df = data_collector.add_SCT_to_df(df=self.df, data=self.value,time_start=self.time_start, date=self.timer)
 
         # trading
         # the information the trader can get
