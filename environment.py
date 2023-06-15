@@ -1,6 +1,7 @@
 from gym import Env
 from gym.spaces import Discrete, Box, Tuple, Sequence
 import numpy as np
+import pandas as pd
 
 from gambling import Gambling
 from data_collector import DataCollector
@@ -13,7 +14,7 @@ class FundENV(Env):
         # Variables
         original_value = 10000
         self.time_start = "01-01-2019"
-        time_end = "31-12-2022"
+        self.time_end = "31-12-2022"
         currencies = ["BTC", "ETH", "BNB", "XRP", "LTC", "DOGE", "USDT", "USDC", "ADA"]
         self.trader_amount = 8
 
@@ -43,14 +44,16 @@ class FundENV(Env):
                                                 data_list=[0 for _ in range(self.trader_amount)])
 
         # Set trading time length
-        self.training_time = data_collector.time_cal(time_start=self.time_start, time_end=time_end)
+        self.training_time = data_collector.time_cal(time_start=self.time_start, time_end=self.time_end)
         # timer
         self.timer = 0
 
         # build DataFrame for the market
-        data_collector.data_collection(currencies, time_start=self.time_start, time_end=time_end)
-        df = data_collector.dataframe_producing(currencies, time_start=self.time_start, time_end=time_end)
-        self.df = data_collector.add_SCT_to_df(df=df, data=original_value, time_start=self.time_start, date=self.timer)
+        data_collector.data_collection(currencies, time_start=self.time_start, time_end=self.time_end)
+        df = data_collector.dataframe_producing(currencies, time_start=self.time_start, time_end=self.time_end)
+        df['SCT'] = np.nan
+        df['SCT'][self.timer] = original_value
+        self.df = df
 
         print('Initialize complete')
         print(f'action_space: {self.action_space}')
@@ -62,26 +65,25 @@ class FundENV(Env):
         print(self.df)
 
     def step(self, action):
+        if self.timer == 0:
+            self.timer += 1
         original_value = self.value
         # action-gambling
         # apply action gambling
         gambling = Gambling()
-        self.winning = gambling.playing_baccarat(action[0], action[1], self.value)
+        self.winning = gambling.playing_baccarat(action[0], action[1][0], self.value)
         # value calculation
         self.value += self.winning
         # update DataFrame of Market
         data_collector = DataCollector()
-        self.df = data_collector.add_SCT_to_df(df=self.df, data=self.value,time_start=self.time_start, date=self.timer)
+        self.df['SCT'][self.timer] = self.value
         # trading
         # the information the trader can get
-        df = self.df.copy()
-        if self.timer == 0:
-            df_current = df.copy().iloc[0]
-        else:
-            df_current = df.copy().iloc[0:self.timer]
+        df_current = self.df.copy().iloc[0:self.timer+1]
+        print(df_current)
         # calculate the investment amount on SCT
         return_rate_cal = Return_rate_cal()
-        market_data = return_rate_cal.market_cal(self.timer, df_current)
+        market_data = return_rate_cal.market_cal(self.timer, df_current, start=self.time_start, end=self.time_end)
         # storing the investments on SCT
         invest_data_list = [0.0 for _ in range(self.trader_amount)]
         for i in range(self.trader_amount):

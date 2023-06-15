@@ -10,7 +10,7 @@ class FixedWeightTrading:
 
     def equal_weight(self, i):
         weights = pd.Series([0] * len(self.df.columns), index=self.df.columns)
-        assets = self.df.columns[(self.df.columns != self.exclude) & self.df_returns.iloc[i + 1].notnull()]
+        assets = self.df.columns[(self.df.columns != self.exclude)]
         weights[assets] = 1 / len(assets)
         return weights
 
@@ -66,11 +66,9 @@ class RiskParityTrading:
 
 
 class Return_rate_cal:
-    def market_cal(self, t, df):
+    def market_cal(self, t, df, start, end):
 
         df_returns = df.pct_change()
-        print(df)
-        print(df.iloc[0])
         df_normalized = df / df.iloc[0]
 
         traders = [
@@ -97,10 +95,9 @@ class Return_rate_cal:
             traders_portfolio[i].iloc[t, rt_coli - 1] = traders_portfolio[i].iloc[t, rt_coli + 1] * \
                                                         traders_portfolio[i].iloc[t, rt_coli - 2]
             data_collector = DataCollector()
-            if t < data_collector.time_cal(time_start=self.start, time_end=self.end):
-                traders_portfolio[i].iloc[t + 1, rt_coli] = np.sum(
-                    traders_portfolio[i].iloc[t, inv_coli] * df_returns.copy().iloc[t + 1, inv_coli])
-                traders_portfolio[i].iloc[t + 1, rt_coli + 1] = traders_portfolio[i].iloc[t, rt_coli + 1] * (
-                    1 + traders_portfolio[i].iloc[t + 1, rt_coli])
+            traders_portfolio[i].iloc[t, rt_coli] = np.sum(
+                    traders_portfolio[i].iloc[t-1, inv_coli] * df_returns.copy().iloc[t, inv_coli])
+            traders_portfolio[i].iloc[t, rt_coli + 1] = traders_portfolio[i].iloc[t-1, rt_coli + 1] * (
+                    1 + traders_portfolio[i].iloc[t, rt_coli])
 
         return traders_portfolio
