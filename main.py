@@ -4,6 +4,7 @@ import numpy as np
 
 from gambling import Gambling
 from data_collector import DataCollector
+from trader import MomentumTrading, FixedWeightTrading, RiskParityTrading
 
 
 class FundENV(Env):
@@ -34,6 +35,8 @@ class FundENV(Env):
 
         # Set trading time length
         self.training_time = DataCollector.time_cal(time_start=time_start, time_end=time_end)
+        # timer
+        self.timer = 0
 
         # build DataFrame for the market
         df = DataCollector.dataframe_producing(currencies, time_start=time_start, time_end=time_end)
@@ -49,11 +52,15 @@ class FundENV(Env):
         self.df = DataCollector.add_SCT_to_df(df=self.df, data=self.value)
 
         # trading
+        # the information the trader can get
+        df = self.df
+        df_current = df.copy().loc[0:self.timer]
+        # get weight
 
         # state observing
 
         # timer
-        self.training_time -= 1
+        self.timer += 1
 
         # calculating reward
 
