@@ -71,10 +71,11 @@ class DataCollector:
         for i, coin in enumerate(currencies):
             data_array[:, i] = data_dict[coin]['data']  # Access the data list for the current currency
 
-
         return pd.DataFrame(data_array, index=dates, columns=currencies)
 
-    def add_SCT_to_df(self, df, data, date):
-        df.at[date, 'SCT'] = data
+    def add_SCT_to_df(self, df, data, time_start, date):
+        start = self.time_transform(time_start)
+        dates = pd.date_range(start, periods=date)
+        df.at[date[-1], 'SCT'] = data
         return df
 
