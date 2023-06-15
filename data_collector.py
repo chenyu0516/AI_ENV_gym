@@ -2,6 +2,7 @@ from cryptocmd import CmcScraper
 from datetime import date
 import pandas as pd
 import numpy as np
+import json
 
 
 class DataCollector:
@@ -30,7 +31,8 @@ class DataCollector:
             }
             print(f'Storing {currency} success')
 
-        return data_collection
+        with open("crypto_data.json", "w") as json_file:
+            json.dump(data_collection, json_file)
 
     def time_cal(self, time_start, time_end):
 
@@ -60,17 +62,21 @@ class DataCollector:
                 output_data[i] = output_data[i - 1] * fraction
         return output_data
 
+    def data_read(self):
+        with open('crypto_data.json', 'r') as f:
+            data_json = f.read()
+        return json.loads(data_json)
+
     def dataframe_producing(self, currencies, time_start, time_end):
         start = self.time_transform(time_start)
         time_period = self.time_cal(time_start, time_end)
-        data_list = self.data_collection(currencies, time_start=time_start, time_end=time_end)
-        #print(data_list)
+        data_dict = self.data_read()
 
         dates = pd.date_range(start, periods=time_period)
         data_array = np.empty((len(dates), len(currencies)))
 
         for i, coin in enumerate(currencies):
-            data = data_list[coin]['data']  # Access the data list for the current currency
+            data = data_dict[coin]['data']  # Access the data list for the current currency
             data_trans = self.data_transform(data)
             data_array[:, i] = data_trans
 

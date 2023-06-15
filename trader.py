@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+from data_collector import DataCollector
 
 class FixedWeightTrading:
     def __init__(self, df, df_returns, exclude):
@@ -95,9 +95,11 @@ class Return_rate_cal:
             traders_portfolio[i].iloc[t, inv_coli] = getattr(q, method_name)(t)
             traders_portfolio[i].iloc[t, rt_coli - 1] = traders_portfolio[i].iloc[t, rt_coli + 1] * \
                                                         traders_portfolio[i].iloc[t, rt_coli - 2]
-            traders_portfolio[i].iloc[t + 1, rt_coli] = np.sum(
-                traders_portfolio[i].iloc[t, inv_coli] * df_returns.copy().iloc[t + 1, inv_coli])
-            traders_portfolio[i].iloc[t + 1, rt_coli + 1] = traders_portfolio[i].iloc[t, rt_coli + 1] * (
+            data_collector = DataCollector()
+            if t < data_collector.time_cal(time_start=self.start, time_end=self.end):
+                traders_portfolio[i].iloc[t + 1, rt_coli] = np.sum(
+                    traders_portfolio[i].iloc[t, inv_coli] * df_returns.copy().iloc[t + 1, inv_coli])
+                traders_portfolio[i].iloc[t + 1, rt_coli + 1] = traders_portfolio[i].iloc[t, rt_coli + 1] * (
                     1 + traders_portfolio[i].iloc[t + 1, rt_coli])
 
         return traders_portfolio

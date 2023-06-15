@@ -5,7 +5,7 @@ class Gambling:
 
     def playing_baccarat(self, hand, percentage, value):
 
-        odds = {'banker': 1.95, 'player': 2, 'tie': 9, 'pair': 12}
+        odds = [0.95, 1, 8, 11]
         playing_result = random.random()
 
         # banker win
@@ -24,4 +24,4 @@ class Gambling:
         elif hand == 4 and playing_result < 0.074683:
             return percentage * value * odds[hand]
 
-        return 0
+        return -value

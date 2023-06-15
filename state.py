@@ -13,7 +13,5 @@ class Observe_State_Change:
                  np.array([data_list[4]], dtype=np.float32),
                  np.array([data_list[5]], dtype=np.float32),
                  np.array([data_list[6]], dtype=np.float32),
-                 np.array([data_list[7]], dtype=np.float32),
-                 np.array([data_list[8]], dtype=np.float32),
-                 np.array([data_list[9]], dtype=np.float32))
+                 np.array([data_list[7]], dtype=np.float32))
 
