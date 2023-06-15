@@ -48,6 +48,10 @@ class DataCollector:
         input = input.split('-')
         return input[2]+input[1]+input[0]
 
+    def time_transform_1(self, input):
+        input = input.split('-')
+        return input[2]+'-'+input[1]+'-'+input[0]
+
     def data_transform(self, input_data):
         output_data = [1.0] * len(input_data)
         for i in range(len(input_data)):

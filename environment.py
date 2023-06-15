@@ -4,8 +4,8 @@ import numpy as np
 
 from gambling import Gambling
 from data_collector import DataCollector
-
-
+from trader import Return_rate_cal
+from state import Observe_State_Change
 
 class FundENV(Env):
 
@@ -15,6 +15,7 @@ class FundENV(Env):
         time_start = "01-01-2019"
         time_end = "31-12-2022"
         currencies = ["BTC", "ETH", "BNB", "XRP", "LTC", "DOGE", "USDT", "USDC", "ADA"]
+        self.trader_amount = 10
 
         # Create an instances
         data_collector = DataCollector()
@@ -27,25 +28,19 @@ class FundENV(Env):
                   Box(low=0, high=float('inf'), shape=(1,), dtype=np.float32)]
 
         # there are n traders
-        list_2 = [Box(low=-float('inf'), high=float('inf'), shape=(1,), dtype=np.float32) for _ in range(10)]
+        list_2 = [Box(low=-float('inf'), high=float('inf'), shape=(1,),
+                      dtype=np.float32) for _ in range(self.trader_amount)]
         element_space = list_1+list_2
         self.observation_space = Tuple(element_space)
 
         # Set the value of SCT
         self.value = original_value
+        # Set winning
+        self.winning = 0
         # Set start state
-        self.state = initial_state = (np.array([0], dtype=np.float32),
-                                      np.array([original_value], dtype=np.float32),
-                                      np.array([0], dtype=np.float32),
-                                      np.array([0], dtype=np.float32),
-                                      np.array([0], dtype=np.float32),
-                                      np.array([0], dtype=np.float32),
-                                      np.array([0], dtype=np.float32),
-                                      np.array([0], dtype=np.float32),
-                                      np.array([0], dtype=np.float32),
-                                      np.array([0], dtype=np.float32),
-                                      np.array([0], dtype=np.float32),
-                                      np.array([0], dtype=np.float32))
+        observe_state_change = Observe_State_Change
+        self.state = observe_state_change.state_update(winning=self.winning, value=self.value,
+                                                       data_list=[0 for _ in range(self.trader_amount)])
 
         # Set trading time length
         self.training_time = data_collector.time_cal(time_start=time_start, time_end=time_end)
@@ -69,13 +64,30 @@ class FundENV(Env):
         # the information the trader can get
         df = self.df
         df_current = df.copy().loc[0:self.timer]
-        # get weight
+        # calculate the investment amount on SCT
+        return_rate_cal = Return_rate_cal
+        market_data = return_rate_cal.market_cal(self.timer, df_current)
+        # storing the investments on SCT
+        invest_data_list = [0.0 for _ in range(self.trader_amount)]
+        for i in range(self.trader_amount):
+            invest_data_list[i] = market_data[i].iloc[self.timer, -3]
+        # calculate current value
+        self.value += sum(invest_data_list)
 
         # state observing
-
+        observe_state_change = Observe_State_Change
+        self.state = observe_state_change.state_update(winning=self.winning, value=self.value,
+                                                       data_list=invest_data_list)
         # timer
         self.timer += 1
+
         # calculating reward
+        # calculate SCT invest difference
+        invest_dif_list = [0.0 for _ in range(self.trader_amount)]
+        for i in range(self.trader_amount):
+            invest_dif_list[i] = market_data[i].loc[self.timer, -3] - market_data[i].loc[self.timer-1, -3]
+        # set the reward
+        self.rewards = sum(invest_dif_list)
 
         # Check timer
         if self.timer == self.training_time:
@@ -87,7 +99,7 @@ class FundENV(Env):
         info = {}
 
         # return step information
-        # return self.value, self.state, self.training_time, self.reward, self.info
+        return self.value, self.state, self.training_time, self.rewards, info, self.timer
     def render(self):
         # implement with visualization
         pass
@@ -98,10 +110,15 @@ class FundENV(Env):
         time_end = "31-12-2022"
         currencies = ["BTC", "ETH", "BNB", "XRP", "LTC", "DOGE", "USDT", "USDC", "ADA"]
 
+        self.trader_amount = 10
         self.value = original_value
-        self.state = (0, original_value, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        self.winning = 0
+        observe_state_change = Observe_State_Change
+        self.state = observe_state_change.state_update(winning=self.winning, value=original_value,
+                                                       data_list=[0 for _ in range(self.trader_amount)])
         self.training_time = DataCollector.time_cal(time_start=time_start, time_end=time_end)
-        df = DataCollector.dataframe_producing(currencies, time_start=time_start, time_end=time_end)
+        data_collector = DataCollector
+        df = data_collector.dataframe_producing(currencies, time_start=time_start, time_end=time_end)
         self.df = DataCollector.add_SCT_to_df(df=df, data=original_value)
 
-        return self.value, self.state, self.training_time, self.df
+        return self.value, self.state, self.training_time, self.df, self.winning

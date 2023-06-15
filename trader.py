@@ -64,25 +64,40 @@ class RiskParityTrading:
 
         return weights
 
-    class Return_rate_cal:
 
-        def update_return_rate(self, df, t, initial_value):
+class Return_rate_cal:
+    def market_cal(self, t, df):
 
-            df_returns = df.ptc_change()
-            df_normalized = df / df.iloc[0]
+        df_returns = df.pct_change()
+        (1 + df_returns).cumprod().plot()
+        df_normalized = df / df.iloc[0]
 
-            traders = [
-                (FixedWeightTrading(df.copy(), df_returns.copy(), ''), 'equal_weight', ''),
-                (MomentumTrading(df.copy(), df_returns.copy(), 10, 20, None), 'dual_momentum', '(sig=10, esc=20)'),
-                (RiskParityTrading(df.copy(), df_returns.copy(), df_normalized.copy(), 10), 'sd_risk', '(sig=10)'),
-            ]
-            traders_portfolio = [pd.DataFrame(np.nan, index=df.index, columns=df.columns.append(pd.Index(['Returns'])))
-                                 for _ in range(len(traders))]
-            # scam = [0] * df.shape[0]
+        traders = [
+            (FixedWeightTrading(df.copy(), df_returns.copy(), ''), 'equal_weight', ''),
+            (MomentumTrading(df.copy(), df_returns.copy(), 20, 20, None), 'dual_momentum', '(sig=20, esc=20)'),
+            (MomentumTrading(df.copy(), df_returns.copy(), 10, 20, None), 'dual_momentum', '(sig=10, esc=20)'),
+            (MomentumTrading(df.copy(), df_returns.copy(), 10, 25, None), 'dual_momentum', '(sig=10, esc=25)'),
+            (MomentumTrading(df.copy(), df_returns.copy(), 10, 30, None), 'dual_momentum', '(sig=10, esc=30)'),
+            (RiskParityTrading(df.copy(), df_returns.copy(), df_normalized.copy(), 10), 'sd_risk', '(sig=10)'),
+            (RiskParityTrading(df.copy(), df_returns.copy(), df_normalized.copy(), 15), 'sd_risk', '(sig=15)'),
+            (RiskParityTrading(df.copy(), df_returns.copy(), df_normalized.copy(), 20), 'sd_risk', '(sig=20)'),
+        ]
 
-            for i, (q, method_name, _) in enumerate(traders):
-                traders_portfolio[i].iloc[t, :-1] = getattr(q, method_name)(t)
-                traders_portfolio[i]['Returns'][t + 1] = np.sum(
-                    traders_portfolio[i].iloc[t, :-1] * df_returns.iloc[t + 1, :-1])
+        traders_portfolio = [pd.DataFrame(np.nan, index=df.index, columns=df.columns.append(
+            pd.Index(['SCTInvest', 'Returns', 'Current Asset']))) for _ in range(len(traders))]
+        for trader_portfolio in traders_portfolio:
+            trader_portfolio['Current Asset'][0] = 100
 
-                current_value = (1+traders_portfolio[i]['Returns']).cumprod()
+        inv_coli = [df.columns.get_loc(col) for col in df.columns]
+        rt_coli = traders_portfolio[0].columns.get_loc('Returns')
+
+        for i, (q, method_name, _) in enumerate(traders):
+            traders_portfolio[i].iloc[t, inv_coli] = getattr(q, method_name)(t)
+            traders_portfolio[i].iloc[t, rt_coli - 1] = traders_portfolio[i].iloc[t, rt_coli + 1] * \
+                                                        traders_portfolio[i].iloc[t, rt_coli - 2]
+            traders_portfolio[i].iloc[t + 1, rt_coli] = np.sum(
+                traders_portfolio[i].iloc[t, inv_coli] * df_returns.copy().iloc[t + 1, inv_coli])
+            traders_portfolio[i].iloc[t + 1, rt_coli + 1] = traders_portfolio[i].iloc[t, rt_coli + 1] * (
+                    1 + traders_portfolio[i].iloc[t + 1, rt_coli])
+
+        return traders_portfolio
