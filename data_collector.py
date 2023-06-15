@@ -54,13 +54,6 @@ class DataCollector:
         input = input.split('-')
         return input[2]+'-'+input[1]+'-'+input[0]
 
-    def data_transform(self, input_data):
-        output_data = [1.0] * len(input_data)
-        for i in range(len(input_data)):
-            if i != 0:
-                fraction = input_data[i] / input_data[i - 1]
-                output_data[i] = output_data[i - 1] * fraction
-        return output_data
 
     def data_read(self):
         with open('crypto_data.json', 'r') as f:
@@ -76,12 +69,12 @@ class DataCollector:
         data_array = np.empty((len(dates), len(currencies)))
 
         for i, coin in enumerate(currencies):
-            data = data_dict[coin]['data']  # Access the data list for the current currency
-            data_trans = self.data_transform(data)
-            data_array[:, i] = data_trans
+            data_array[:, i] = data_dict[coin]['data']  # Access the data list for the current currency
+
 
         return pd.DataFrame(data_array, index=dates, columns=currencies)
 
     def add_SCT_to_df(self, df, data, date):
         df.at[date, 'SCT'] = data
         return df
+
