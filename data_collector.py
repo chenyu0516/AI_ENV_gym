@@ -76,7 +76,6 @@ class DataCollector:
 
         return pd.DataFrame(data_array, index=dates, columns=currencies)
 
-    def add_SCT_to_df(self, df, data):
-        df['SCT'] = data
-        print(df)
+    def add_SCT_to_df(self, df, data, date):
+        df.at[date, 'SCT'] = data
         return df

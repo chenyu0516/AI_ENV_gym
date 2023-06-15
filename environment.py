@@ -15,7 +15,7 @@ class FundENV(Env):
         time_start = "01-01-2019"
         time_end = "31-12-2022"
         currencies = ["BTC", "ETH", "BNB", "XRP", "LTC", "DOGE", "USDT", "USDC", "ADA"]
-        self.trader_amount = 10
+        self.trader_amount = 8
 
         # Create an instances
         data_collector = DataCollector()
@@ -25,10 +25,10 @@ class FundENV(Env):
 
         # Observations rewards from previous gambling, fund value before gambling, trader behavior
         list_1 = [Box(low=-1, high=1, shape=(1,), dtype=np.float32),
-                  Box(low=0, high=float('inf'), shape=(1,), dtype=np.float32)]
+                  Box(low=0, high=100000000, shape=(1,), dtype=np.float32)]
 
         # there are n traders
-        list_2 = [Box(low=-float('inf'), high=float('inf'), shape=(1,),
+        list_2 = [Box(low=-1, high=1, shape=(1,),
                       dtype=np.float32) for _ in range(self.trader_amount)]
         element_space = list_1+list_2
         self.observation_space = Tuple(element_space)
@@ -49,16 +49,17 @@ class FundENV(Env):
 
         # build DataFrame for the market
         df = data_collector.dataframe_producing(currencies, time_start=time_start, time_end=time_end)
-        self.df = data_collector.add_SCT_to_df(df=df, data=original_value)
+        self.df = data_collector.add_SCT_to_df(df=df, data=original_value, date=self.timer)
 
     def step(self, action):
         # action-gambling
         # apply action gambling
-        self.winning = Gambling.playing_baccarat(action[0], action[1])
+        self.winning = Gambling.playing_baccarat(action[0], action[1], self.value)
         # value calculation
         self.value += self.winning
         # update DataFrame of Market
-        self.df = DataCollector.add_SCT_to_df(df=self.df, data=self.value)
+        data_collector = DataCollector
+        self.df = data_collector.add_SCT_to_df(df=self.df, data=self.value, date=self.timer)
 
         # trading
         # the information the trader can get
@@ -74,10 +75,10 @@ class FundENV(Env):
         # calculate current value
         self.value += sum(invest_data_list)
 
-        # state observing
+        # state observing(the percentage of value from gambling, the current-value, the percentage of value from trader
         observe_state_change = Observe_State_Change
-        self.state = observe_state_change.state_update(winning=self.winning, value=self.value,
-                                                       data_list=invest_data_list)
+        self.state = observe_state_change.state_update(winning=self.winning/self.value, value=self.value,
+                                                       data_list=[x/self.value for x in invest_data_list])
         # timer
         self.timer += 1
 
@@ -87,7 +88,7 @@ class FundENV(Env):
         for i in range(self.trader_amount):
             invest_dif_list[i] = market_data[i].loc[self.timer, -3] - market_data[i].loc[self.timer-1, -3]
         # set the reward
-        self.rewards = sum(invest_dif_list)
+        self.reward = sum(invest_dif_list)
 
         # Check timer
         if self.timer == self.training_time:
@@ -99,7 +100,7 @@ class FundENV(Env):
         info = {}
 
         # return step information
-        return self.value, self.state, self.training_time, self.rewards, info, self.timer
+        return self.value, self.state, self.reward, info, self.timer, Is_Done, self.df
     def render(self):
         # implement with visualization
         pass
@@ -110,7 +111,7 @@ class FundENV(Env):
         time_end = "31-12-2022"
         currencies = ["BTC", "ETH", "BNB", "XRP", "LTC", "DOGE", "USDT", "USDC", "ADA"]
 
-        self.trader_amount = 10
+        self.trader_amount = 8
         self.value = original_value
         self.winning = 0
         observe_state_change = Observe_State_Change
@@ -119,6 +120,6 @@ class FundENV(Env):
         self.training_time = DataCollector.time_cal(time_start=time_start, time_end=time_end)
         data_collector = DataCollector
         df = data_collector.dataframe_producing(currencies, time_start=time_start, time_end=time_end)
-        self.df = DataCollector.add_SCT_to_df(df=df, data=original_value)
+        self.df = DataCollector.add_SCT_to_df(df=df, data=original_value, date=self.timer)
 
         return self.value, self.state, self.training_time, self.df, self.winning
