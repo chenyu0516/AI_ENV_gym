@@ -12,7 +12,7 @@ class FundENV(Env):
     def __init__(self):
         # Variables
         original_value = 10000
-        time_start = "01-01-2019"
+        self.time_start = "01-01-2019"
         time_end = "31-12-2022"
         currencies = ["BTC", "ETH", "BNB", "XRP", "LTC", "DOGE", "USDT", "USDC", "ADA"]
         self.trader_amount = 8
@@ -43,14 +43,14 @@ class FundENV(Env):
                                                 data_list=[0 for _ in range(self.trader_amount)])
 
         # Set trading time length
-        self.training_time = data_collector.time_cal(time_start=time_start, time_end=time_end)
+        self.training_time = data_collector.time_cal(time_start=self.time_start, time_end=time_end)
         # timer
         self.timer = 0
 
         # build DataFrame for the market
-        data_collector.data_collection(currencies, time_start=time_start, time_end=time_end)
-        df = data_collector.dataframe_producing(currencies, time_start=time_start, time_end=time_end)
-        self.df = data_collector.add_SCT_to_df(df=df, data=original_value, date=self.timer)
+        data_collector.data_collection(currencies, time_start=self.time_start, time_end=time_end)
+        df = data_collector.dataframe_producing(currencies, time_start=self.time_start, time_end=time_end)
+        self.df = data_collector.add_SCT_to_df(df=df, data=original_value, time_start=self.time_start, date=self.timer)
 
     def step(self, action):
         original_value = self.value
