@@ -1,7 +1,7 @@
 import random
 
 
-class Gambling(random):
+class Gambling:
 
     def playing_baccarat(self, hand, amount):
 

@@ -66,7 +66,7 @@ class RiskParityTrading:
 
     class Return_rate_cal:
 
-        def update_return_rate(self, df, t):
+        def update_return_rate(self, df, t, initial_value):
 
             df_returns = df.ptc_change()
             df_normalized = df / df.iloc[0]
@@ -85,3 +85,4 @@ class RiskParityTrading:
                 traders_portfolio[i]['Returns'][t + 1] = np.sum(
                     traders_portfolio[i].iloc[t, :-1] * df_returns.iloc[t + 1, :-1])
 
+                current_value = (1+traders_portfolio[i]['Returns']).cumprod()

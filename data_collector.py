@@ -1,16 +1,16 @@
-import json
 from cryptocmd import CmcScraper
 from datetime import date
 import pandas as pd
 import numpy as np
 
 
-class DataCollector(json, CmcScraper, date, pd, np):
+class DataCollector:
     def data_collection(self, currencies, time_start, time_end):
 
         data_collection = {}  # Dictionary to store the collected data
-
+        print('Start market data collecting...')
         for currency in currencies:
+            print(f'Start collecting {currency}...')
             scraper = CmcScraper(currency, time_start, time_end)
             data_tuple = scraper.get_data()
 
@@ -19,6 +19,8 @@ class DataCollector(json, CmcScraper, date, pd, np):
             for i in range(peroid):
                 data_list[i] = data_tuple[1][-i - 1][4]
 
+            print(f'Collecting {currency} success')
+            print('Storing...')
             # Store the data in the collection dictionary
             data_collection[currency] = {
                 "currency": currency,
@@ -26,8 +28,9 @@ class DataCollector(json, CmcScraper, date, pd, np):
                 "end_date": time_end,
                 "data": data_list
             }
+            print(f'Storing {currency} success')
 
-            return data_collection
+        return data_collection
 
     def time_cal(self, time_start, time_end):
 
@@ -54,20 +57,22 @@ class DataCollector(json, CmcScraper, date, pd, np):
         return output_data
 
     def dataframe_producing(self, currencies, time_start, time_end):
-
         start = self.time_transform(time_start)
-        time_peroid = self.time_cal(time_start,time_end)
-        data = self.data_collection(currencies, time_start=time_start, time_end=time_end)
+        time_period = self.time_cal(time_start, time_end)
+        data_list = self.data_collection(currencies, time_start=time_start, time_end=time_end)
+        #print(data_list)
 
-        dates = pd.date_range(start, periods=time_peroid)
+        dates = pd.date_range(start, periods=time_period)
         data_array = np.empty((len(dates), len(currencies)))
 
         for i, coin in enumerate(currencies):
-            data = data[coin]['data']
+            data = data_list[coin]['data']  # Access the data list for the current currency
             data_trans = self.data_transform(data)
             data_array[:, i] = data_trans
 
         return pd.DataFrame(data_array, index=dates, columns=currencies)
 
     def add_SCT_to_df(self, df, data):
-        return df.iloc[data, 'SCT']
+        df['SCT'] = data
+        print(df)
+        return df
