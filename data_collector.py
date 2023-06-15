@@ -1,3 +1,5 @@
+import datetime
+
 from cryptocmd import CmcScraper
 from datetime import date
 import pandas as pd
@@ -43,7 +45,7 @@ class DataCollector:
         end_date = date(int(time_end[2]), int(time_end[1]), int(time_end[0]))
 
         delta = end_date - start_date
-        return delta.days
+        return delta.days + 1
 
     def time_transform(self, input):
 
@@ -64,6 +66,7 @@ class DataCollector:
         start = self.time_transform(time_start)
         time_period = self.time_cal(time_start, time_end)
         data_dict = self.data_read()
+        print(time_period)
 
         dates = pd.date_range(start, periods=time_period)
         data_array = np.empty((len(dates), len(currencies)))
@@ -74,8 +77,10 @@ class DataCollector:
         return pd.DataFrame(data_array, index=dates, columns=currencies)
 
     def add_SCT_to_df(self, df, data, time_start, date):
-        start = self.time_transform(time_start)
-        dates = pd.date_range(start, periods=date)
-        df.at[dates.iloc[-1], 'SCT'] = data
+        time = time_start.split('-')
+        start = datetime.date(int(time[2]), int(time[1]), int(time[0]))
+        the_date = start + datetime.timedelta(days=date)
+        the_date = str(the_date) + ' 00:00:00'
+        df.at[the_date, "SCT"] = data
         return df
 

@@ -69,7 +69,8 @@ class Return_rate_cal:
     def market_cal(self, t, df):
 
         df_returns = df.pct_change()
-        (1 + df_returns).cumprod().plot()
+        print(df)
+        print(df.iloc[0])
         df_normalized = df / df.iloc[0]
 
         traders = [

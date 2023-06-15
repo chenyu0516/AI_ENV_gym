@@ -52,6 +52,15 @@ class FundENV(Env):
         df = data_collector.dataframe_producing(currencies, time_start=self.time_start, time_end=time_end)
         self.df = data_collector.add_SCT_to_df(df=df, data=original_value, time_start=self.time_start, date=self.timer)
 
+        print('Initialize complete')
+        print(f'action_space: {self.action_space}')
+        print(f'observation_space: {self.observation_space}')
+        print(f'initial state: {self.state}')
+        print(f'training_time: {self.training_time}')
+        print(f'initial value: {self.value}')
+        print('DataFrame of market')
+        print(self.df)
+
     def step(self, action):
         original_value = self.value
         # action-gambling
@@ -63,11 +72,13 @@ class FundENV(Env):
         # update DataFrame of Market
         data_collector = DataCollector()
         self.df = data_collector.add_SCT_to_df(df=self.df, data=self.value,time_start=self.time_start, date=self.timer)
-
         # trading
         # the information the trader can get
-        df = self.df
-        df_current = df.copy().iloc[0:self.timer]
+        df = self.df.copy()
+        if self.timer == 0:
+            df_current = df.copy().iloc[0]
+        else:
+            df_current = df.copy().iloc[0:self.timer]
         # calculate the investment amount on SCT
         return_rate_cal = Return_rate_cal()
         market_data = return_rate_cal.market_cal(self.timer, df_current)
@@ -125,6 +136,6 @@ class FundENV(Env):
         data_collector = DataCollector()
         self.training_time = data_collector.time_cal(time_start=time_start, time_end=time_end)
         df = data_collector.dataframe_producing(currencies, time_start=time_start, time_end=time_end)
-        self.df = data_collector.add_SCT_to_df(df=df, data=original_value, date=self.timer)
+        self.df = data_collector.add_SCT_to_df(df=df, data=original_value, date=self.timer, time_start=time_start)
 
         return self.value, self.state, self.training_time, self.df, self.winning
