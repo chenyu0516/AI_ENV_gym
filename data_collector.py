@@ -76,6 +76,6 @@ class DataCollector:
     def add_SCT_to_df(self, df, data, time_start, date):
         start = self.time_transform(time_start)
         dates = pd.date_range(start, periods=date)
-        df.at[dates[-1], 'SCT'] = data
+        df.at[dates.iloc[-1], 'SCT'] = data
         return df
 
