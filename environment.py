@@ -92,7 +92,7 @@ class FundENV(Env):
         self.value += sum(invest_data_list)
 
         # state observing(the percentage of value from gambling, the current-value, the percentage of value from trader
-        observe_state_change = Observe_State_Change
+        observe_state_change = Observe_State_Change()
         self.state = observe_state_change.state_update(winning=self.winning/original_value,
                                                        value=original_value,
                                                        data_list=[x/original_value for x in invest_data_list])
@@ -101,7 +101,7 @@ class FundENV(Env):
         # calculate SCT invest difference
         invest_dif_list = [0.0 for _ in range(self.trader_amount)]
         for i in range(self.trader_amount):
-            invest_dif_list[i] = market_data[i].loc[self.timer, -3] - market_data[i].loc[self.timer-1, -3]
+            invest_dif_list[i] = market_data[i].iloc[self.timer, -3] - market_data[i].iloc[self.timer-1, -3]
         # set the reward
         self.reward = sum(invest_dif_list)
 
