@@ -1,7 +1,7 @@
 from re import T
 from environment import FundENV
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Flatten
 from keras.optimizers import Adam
 from rl.agents import DQNAgent
 from rl.policy import BoltzmannQPolicy
@@ -31,7 +31,7 @@ for episode in range(1, episodes+1):
 '''
 
 states = env.observation_space.shape
-actions = env.action_space.n
+actions = env.action_space.shape[0]
 
 
 def build_model(states, actions):

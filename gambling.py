@@ -5,6 +5,7 @@ class Gambling:
 
     def playing_baccarat(self, hand, percentage, value):
 
+        percentage = percentage/100
         odds = [0.95, 1, 8, 11]
         playing_result = random.random()
 

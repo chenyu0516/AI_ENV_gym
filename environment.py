@@ -22,10 +22,10 @@ class FundENV(Env):
         data_collector = DataCollector()
 
         # Actions we can take: gambling hand, amount
-        self.action_space = Tuple((Discrete(4), Box(low=0, high=0.01, shape=(1,), dtype=np.float32)))
+        self.action_space = Box(low=0, high=1, shape=(2,), dtype=np.float32)
 
         # Define the observation space
-        self.observation_space = Box(low=0, high=100000000, shape=(1, 10), dtype=np.float32)
+        self.observation_space = Box(low=0, high=100000000, shape=(10,), dtype=np.float32)
 
         # Set the value of SCT
         self.value = original_value
@@ -68,7 +68,7 @@ class FundENV(Env):
         # action-gambling
         # apply action gambling
         gambling = Gambling()
-        self.winning = gambling.playing_baccarat(action[0], action[1][0], self.value)
+        self.winning = gambling.playing_baccarat(action[0], action[1], self.value)
         # value calculation
         self.value += self.winning
         # update DataFrame of Market
