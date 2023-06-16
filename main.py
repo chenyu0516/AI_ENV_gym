@@ -1,3 +1,4 @@
+from re import T
 from environment import FundENV
 from keras.models import Sequential
 from keras.layers import Dense
@@ -5,13 +6,14 @@ from keras.optimizers import Adam
 from rl.agents import DQNAgent
 from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
+import matplotlib.pyplot as plt
 
 
 env = FundENV()
 print(env.action_space.sample())
 print(env.observation_space.sample())
 
-episodes = 10
+'''episodes = 2
 for episode in range(1, episodes+1):
     state = env.reset()
     Is_done = False
@@ -19,18 +21,23 @@ for episode in range(1, episodes+1):
 
     while not Is_done:
         action = env.action_space.sample()
-        current_value, n_state, reward, info, timer, Is_Done, df = env.step(action)
+        current_value, n_state, reward, info, timer, Is_done, df = env.step(action)
         score += reward
-    print('Episode:{} Score:{}'.format(episode, score))
 
+    print(df)
+    df['SCT'].plot()
+    plt.show()
+    print('Episode:{} Score:{}'.format(episode, score))
 '''
-states = env.observation_space.shape
-actions = env.action_space.n
+
+states = env.observation_space[0].shape[0]
+actions = env.action_space[0].n
 
 
 def build_model(states, actions):
     model = Sequential()
-    model.add(Dense(24, activation='relu', input_shape=states))
+    model.add(Dense(24, activation='relu', input_shape=(states,)))
+    # Input shape of the first element in states
     model.add(Dense(24, activation='relu'))
     model.add(Dense(actions, activation='linear'))
     return model
@@ -50,4 +57,4 @@ def build_agent(model, actions):
 
 dqn = build_agent(model, actions)
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
-dqn.fit(env, nb_steps=50000, visualize=False, verbose=1)'''
+dqn.fit(env, nb_steps=50000, visualize=False, verbose=1)

@@ -66,9 +66,16 @@ class RiskParityTrading:
 
 
 class Return_rate_cal:
-    def market_cal(self, t, df, start, end):
+    def __init__(self, traders_number, df):
+        self.traders_portfolio = [pd.DataFrame(np.nan, index=[0,1], columns=df.columns.append(
+                pd.Index(['Returns', 'Current Asset', 'SCTInvest']))) for _ in range(traders_number)]
+        for tp in self.traders_portfolio:
+            tp.loc[1] = [0]*len(tp.columns)
+            tp['Current Asset'][1] = 100
 
-        df_returns = df.pct_change()
+    def market_cal(self, t, df):
+
+        df_returns = df.copy().pct_change()
         df_normalized = df / df.iloc[0]
 
         traders = [
@@ -82,22 +89,33 @@ class Return_rate_cal:
             (RiskParityTrading(df.copy(), df_returns.copy(), df_normalized.copy(), 20), 'sd_risk', '(sig=20)'),
         ]
 
-        traders_portfolio = [pd.DataFrame(np.nan, index=df.index, columns=df.columns.append(
-            pd.Index(['SCTInvest', 'Returns', 'Current Asset']))) for _ in range(len(traders))]
-        for trader_portfolio in traders_portfolio:
-            trader_portfolio['Current Asset'][0] = 100
+        traders_portfolio = self.traders_portfolio
 
         inv_coli = [df.columns.get_loc(col) for col in df.columns]
         rt_coli = traders_portfolio[0].columns.get_loc('Returns')
 
         for i, (q, method_name, _) in enumerate(traders):
-            traders_portfolio[i].iloc[t, inv_coli] = getattr(q, method_name)(t)
-            traders_portfolio[i].iloc[t, rt_coli - 1] = traders_portfolio[i].iloc[t, rt_coli + 1] * \
-                                                        traders_portfolio[i].iloc[t, rt_coli - 2]
-            data_collector = DataCollector()
-            traders_portfolio[i].iloc[t, rt_coli] = np.sum(
-                    traders_portfolio[i].iloc[t-1, inv_coli] * df_returns.copy().iloc[t, inv_coli])
-            traders_portfolio[i].iloc[t, rt_coli + 1] = traders_portfolio[i].iloc[t-1, rt_coli + 1] * (
-                    1 + traders_portfolio[i].iloc[t, rt_coli])
+            traders_portfolio[i].index = df.index[-2::]
+            # Update Previous Weights and Asset and SCT invest
+            traders_portfolio[i].iloc[0, inv_coli] = traders_portfolio[i].iloc[1, inv_coli]
+            traders_portfolio[i].iloc[0, rt_coli + 1] = traders_portfolio[i].iloc[1, rt_coli + 1]
+            traders_portfolio[i].iloc[0, rt_coli + 2] = traders_portfolio[i].iloc[1, rt_coli + 2]
+            # Weights
+            traders_portfolio[i].iloc[1, inv_coli] = getattr(q, method_name)(t)
 
-        return traders_portfolio
+            # Returns = recap previous performance (no SCP)
+            df_returns_copy = df_returns.copy()
+            df_returns_copy['SCT'][-1] = 0
+            # print(df_returns_copy)
+            traders_portfolio[i].iloc[1, rt_coli] = np.sum(
+                traders_portfolio[i].iloc[0, inv_coli] * df_returns_copy.iloc[-1, inv_coli])
+            # Current Asset to invest with weights = Previous Asset * Returns
+            traders_portfolio[i].iloc[1, rt_coli + 1] = traders_portfolio[i].iloc[0, rt_coli + 1] * (
+                    1 + traders_portfolio[i].iloc[1, rt_coli])
+            # SCTInvest = how much i invest in SCT = Current Asset * SCT weight
+            traders_portfolio[i].iloc[1, rt_coli + 2] = traders_portfolio[i].iloc[1, rt_coli + 1] * \
+                                                        traders_portfolio[i].iloc[1, rt_coli - 1]
+
+        self.traders_portfolio = traders_portfolio
+
+        return self.traders_portfolio
