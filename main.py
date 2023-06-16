@@ -30,14 +30,13 @@ for episode in range(1, episodes+1):
     print('Episode:{} Score:{}'.format(episode, score))
 '''
 
-states = env.observation_space[0].shape[0]
-actions = env.action_space[0].n
+states = env.observation_space.shape
+actions = env.action_space.n
 
 
 def build_model(states, actions):
     model = Sequential()
-    model.add(Dense(24, activation='relu', input_shape=(states,)))
-    # Input shape of the first element in states
+    model.add(Dense(24, activation='relu', input_shape=states))
     model.add(Dense(24, activation='relu'))
     model.add(Dense(actions, activation='linear'))
     return model
@@ -56,5 +55,5 @@ def build_agent(model, actions):
 
 
 dqn = build_agent(model, actions)
-dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+dqn.compile(Adam(learning_rate=1e-3), metrics=['mae'])
 dqn.fit(env, nb_steps=50000, visualize=False, verbose=1)

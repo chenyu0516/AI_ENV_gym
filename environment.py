@@ -25,15 +25,7 @@ class FundENV(Env):
         self.action_space = Tuple((Discrete(4), Box(low=0, high=0.01, shape=(1,), dtype=np.float32)))
 
         # Define the observation space
-        observation_low = [-1, 0]  # Example lower bounds for the observation components
-        observation_high = [1, 100000000]  # Example upper bounds for the observation components
-        traders_low = [-1] * self.trader_amount  # Example lower bounds for the trader components
-        traders_high = [1] * self.trader_amount  # Example upper bounds for the trader components
-        observation_space_list = [Box(low=low, high=high, shape=(1,), dtype=np.float32)
-                                  for low, high in zip(observation_low, observation_high)]
-        observation_space_list += [Box(low=low, high=high, shape=(1,), dtype=np.float32)
-                                   for low, high in zip(traders_low, traders_high)]
-        self.observation_space = Tuple(observation_space_list)
+        self.observation_space = Box(low=0, high=100000000, shape=(1, 10), dtype=np.float32)
 
         # Set the value of SCT
         self.value = original_value
