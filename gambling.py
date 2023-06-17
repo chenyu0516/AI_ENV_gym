@@ -28,8 +28,4 @@ class Gambling:
         elif hand == 3 and playing_result < 0.074683:
             return percentage * value * odds[hand]
 
-        # no action
-        elif index == 40:
-            return 0
-
         return -percentage * value

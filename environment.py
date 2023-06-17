@@ -71,12 +71,10 @@ class FundENV(Env):
         gambling = Gambling()
         self.winning = gambling.playing_baccarat(action, self.value)
         # value calculation
-        print(f"winning: {self.winning}")
         self.value += self.winning
         # update DataFrame of Market
         data_collector = DataCollector()
         self.df['SCT'][self.timer] = self.value
-        print(f"value: {self.value}")
         # trading
         # the information the trader can get
         df_current = self.df.copy().iloc[0:self.timer+1]
@@ -142,6 +140,11 @@ class FundENV(Env):
         data_collector = DataCollector()
         self.training_time = data_collector.time_cal(time_start=time_start, time_end=time_end)
         df = data_collector.dataframe_producing(currencies, time_start=time_start, time_end=time_end)
-        self.df = data_collector.add_SCT_to_df(df=df, data=original_value, date=self.timer, time_start=time_start)
+        df['SCT'] = np.nan
+        df['SCT'][self.timer] = original_value
+        self.df = df
+        self.return_rate_cal = Return_rate_cal(self.trader_amount, df)
+
+        print('reset finished')
 
         return self.state

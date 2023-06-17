@@ -11,9 +11,17 @@ class Observe_State_Change:
         return state
 
     def log(self, input):
-        if -1 <= input <= 1:
-            return input
-        elif input > 1:
-            return np.log(input)+1
-        else:
-            return -np.log(-input)-1
+        input = np.array(input)  # ensures the input is a numpy array
+        output = np.empty_like(input)  # prepare an output array of the same size
+
+        # Using numpy's array boolean indexing to apply the operation to elements that meet the condition
+        mask = (-np.exp(1) <= input) & (input <= np.exp(1))
+        output[mask] = input[mask] / np.exp(1)
+
+        mask = input > np.exp(1)
+        output[mask] = np.log(input[mask]) + 1
+
+        mask = input < -np.exp(1)
+        output[mask] = -np.log(-input[mask]) - 1
+
+        return output
