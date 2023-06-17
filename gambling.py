@@ -5,13 +5,15 @@ class Gambling:
 
     def playing_baccarat(self, index, value):
 
-        percentage = index % 10 / 100
+        percentage = (index % 10)+1 / 1000
         hand = int(index/10)
         odds = [0.95, 1, 8, 11]
         playing_result = random.random()
-
+        print({'percentage': percentage, 'hand': hand})
+        if value < 0:
+            return 0
         # banker win
-        if playing_result < 0.458597 and hand == 0:
+        elif playing_result < 0.458597 and hand == 0:
             return percentage * value * odds[hand]
 
         # player win

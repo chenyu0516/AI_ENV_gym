@@ -56,5 +56,5 @@ def build_agent(model, actions):
 
 
 dqn = build_agent(model, actions)
-dqn.compile(Adam(learning_rate=1e-3), metrics=['mae'])
+dqn.compile(Adam(learning_rate=1e-4), metrics=['mae'])
 dqn.fit(env, nb_steps=50000, visualize=False, verbose=1)

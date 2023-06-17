@@ -22,7 +22,7 @@ class FundENV(Env):
         data_collector = DataCollector()
 
         # Actions we can take: gambling hand, amount
-        self.action_space = Box(low=0, high=40, shape=(1,), dtype=np.float32)
+        self.action_space = Box(low=0, high=39, shape=(1,), dtype=np.float32)
 
         # Define the observation space
         self.observation_space = Box(low=0, high=100000000, shape=(10,), dtype=np.float32)
@@ -71,11 +71,12 @@ class FundENV(Env):
         gambling = Gambling()
         self.winning = gambling.playing_baccarat(action, self.value)
         # value calculation
+        print(f"winning: {self.winning}")
         self.value += self.winning
         # update DataFrame of Market
         data_collector = DataCollector()
         self.df['SCT'][self.timer] = self.value
-        print(self.value)
+        print(f"value: {self.value}")
         # trading
         # the information the trader can get
         df_current = self.df.copy().iloc[0:self.timer+1]
@@ -87,6 +88,7 @@ class FundENV(Env):
         for i in range(self.trader_amount):
             invest_data_list[i] = market_data[i].iloc[1, -1] - market_data[i].iloc[0, -1]
         # calculate current value
+
         self.value += sum(invest_data_list)
 
         # state observing(the percentage of value from gambling, the current-value, the percentage of value from trader
@@ -101,8 +103,11 @@ class FundENV(Env):
         for i in range(self.trader_amount):
             invest_dif_list[i] = market_data[i].iloc[1, -1] - market_data[i].iloc[0, -1]
         # set the reward
-        self.reward = observe_state_change.log(sum(invest_dif_list))
-
+        temp = [0.0 for _ in range(self.trader_amount)]
+        for i in range(self.trader_amount):
+            temp[i] = observe_state_change.log(invest_dif_list[i])
+        self.reward = sum(temp)
+        print(self.reward)
         # timer
         self.timer += 1
 
