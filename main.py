@@ -1,7 +1,7 @@
 from re import T
 from environment import FundENV
 from keras.models import Sequential
-from keras.layers import Dense, Flatten
+from keras.layers import Dense, Flatten, BatchNormalization
 from keras.optimizers import Adam
 from rl.agents import DQNAgent
 from rl.policy import BoltzmannQPolicy
@@ -21,14 +21,12 @@ for episode in range(1, episodes+1):
 
     while not Is_done:
         action = env.action_space.sample()
-        current_value, n_state, reward, info, timer, Is_done, df = env.step(action)
+        n_state, reward, Is_done, Info = env.step(action)
         score += reward
 
-    print(df)
-    df['SCT'].plot()
-    plt.show()
-    print('Episode:{} Score:{}'.format(episode, score))
-'''
+    print('Episode:{} Score:{}'.format(episode, score))'''
+
+
 
 states = env.observation_space.shape
 actions = env.action_space.shape[0]
@@ -36,10 +34,12 @@ actions = env.action_space.shape[0]
 
 def build_model(states, actions):
     model = Sequential()
-    model.add(Dense(24, activation='relu', input_shape=(1, states[0])))
+    model.add(Flatten(input_shape=(1,) + states))
+    model.add(Dense(24, activation='relu', input_shape=states))
+    model.add(BatchNormalization())
     model.add(Dense(24, activation='relu'))
+    model.add(BatchNormalization())
     model.add(Dense(actions, activation='linear'))
-    model.add(Flatten())
     return model
 
 

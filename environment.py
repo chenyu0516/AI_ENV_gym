@@ -22,7 +22,7 @@ class FundENV(Env):
         data_collector = DataCollector()
 
         # Actions we can take: gambling hand, amount
-        self.action_space = Box(low=0, high=1, shape=(2,), dtype=np.float32)
+        self.action_space = Box(low=0, high=40, shape=(1,), dtype=np.float32)
 
         # Define the observation space
         self.observation_space = Box(low=0, high=100000000, shape=(10,), dtype=np.float32)
@@ -33,7 +33,8 @@ class FundENV(Env):
         self.winning = 0
         # Set start state
         state_updater = Observe_State_Change()
-        self.state = state_updater.state_update(winning=self.winning, value=self.value,
+        self.state = state_updater.state_update(winning=self.winning,
+                                                value=state_updater.log(original_value),
                                                 data_list=[0 for _ in range(self.trader_amount)])
 
         # Set trading time length
@@ -68,7 +69,7 @@ class FundENV(Env):
         # action-gambling
         # apply action gambling
         gambling = Gambling()
-        self.winning = gambling.playing_baccarat(action[0], action[1], self.value)
+        self.winning = gambling.playing_baccarat(action, self.value)
         # value calculation
         self.value += self.winning
         # update DataFrame of Market
@@ -78,7 +79,6 @@ class FundENV(Env):
         # trading
         # the information the trader can get
         df_current = self.df.copy().iloc[0:self.timer+1]
-        print(df_current)
         # calculate the investment amount on SCT
         return_rate_cal = self.return_rate_cal
         market_data = return_rate_cal.market_cal(self.timer, df_current.copy())
@@ -91,9 +91,9 @@ class FundENV(Env):
 
         # state observing(the percentage of value from gambling, the current-value, the percentage of value from trader
         observe_state_change = Observe_State_Change()
-        self.state = observe_state_change.state_update(winning=self.winning/original_value,
-                                                       value=original_value,
-                                                       data_list=[x/original_value for x in invest_data_list])
+        self.state = observe_state_change.state_update(winning=self.winning,
+                                                       value=observe_state_change.log(original_value),
+                                                       data_list=[x for x in invest_data_list])
 
         # calculating reward
         # calculate SCT invest difference
@@ -101,7 +101,7 @@ class FundENV(Env):
         for i in range(self.trader_amount):
             invest_dif_list[i] = market_data[i].iloc[1, -1] - market_data[i].iloc[0, -1]
         # set the reward
-        self.reward = sum(invest_dif_list)
+        self.reward = observe_state_change.log(sum(invest_dif_list))
 
         # timer
         self.timer += 1
@@ -114,9 +114,8 @@ class FundENV(Env):
 
         # set placeholder
         info = {}
-
         # return step information
-        return self.value, self.state, self.reward, info, self.timer, Is_Done, self.df
+        return self.state, self.reward, Is_Done, info
     def render(self):
         # implement with visualization
         pass
@@ -132,11 +131,12 @@ class FundENV(Env):
         self.value = original_value
         self.winning = 0
         state_updater = Observe_State_Change()
-        self.state = state_updater.state_update(winning=self.winning, value=self.value,
+        self.state = state_updater.state_update(winning=self.winning,
+                                                value=state_updater.log(self.value),
                                                 data_list=[0 for _ in range(self.trader_amount)])
         data_collector = DataCollector()
         self.training_time = data_collector.time_cal(time_start=time_start, time_end=time_end)
         df = data_collector.dataframe_producing(currencies, time_start=time_start, time_end=time_end)
         self.df = data_collector.add_SCT_to_df(df=df, data=original_value, date=self.timer, time_start=time_start)
 
-        return self.value, self.state, self.training_time, self.df, self.winning, self.timer
+        return self.state
