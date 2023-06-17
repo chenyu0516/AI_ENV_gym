@@ -76,11 +76,4 @@ class DataCollector:
 
         return pd.DataFrame(data_array, index=dates, columns=currencies)
 
-    def add_SCT_to_df(self, df, data, time_start, date):
-        time = time_start.split('-')
-        start = datetime.date(int(time[2]), int(time[1]), int(time[0]))
-        the_date = start + datetime.timedelta(days=date)
-        the_date = str(the_date) + ' 00:00:00'
-        df.at[the_date, "SCT"] = data
-        return df
 
