@@ -34,7 +34,7 @@ class FundENV(Env):
         # Set start state
         state_updater = Observe_State_Change()
         self.state = state_updater.state_update(winning=self.winning,
-                                                value=state_updater.log(original_value),
+                                                value=original_value,
                                                 data_list=[0 for _ in range(self.trader_amount)])
 
         # Set trading time length
@@ -92,7 +92,7 @@ class FundENV(Env):
         # state observing(the percentage of value from gambling, the current-value, the percentage of value from trader
         observe_state_change = Observe_State_Change()
         self.state = observe_state_change.state_update(winning=self.winning,
-                                                       value=observe_state_change.log(original_value),
+                                                       value=original_value,
                                                        data_list=[x for x in invest_data_list])
 
         # calculating reward
@@ -101,10 +101,10 @@ class FundENV(Env):
         for i in range(self.trader_amount):
             invest_dif_list[i] = market_data[i].iloc[1, -1] - market_data[i].iloc[0, -1]
         # set the reward
-        temp = [0.0 for _ in range(self.trader_amount)]
+        '''temp = [0.0 for _ in range(self.trader_amount)]
         for i in range(self.trader_amount):
-            temp[i] = observe_state_change.log(invest_dif_list[i])
-        self.reward = sum(temp)
+            temp[i] = observe_state_change.log(invest_dif_list[i])'''
+        self.reward = sum(invest_dif_list)
         print(self.reward)
         # timer
         self.timer += 1
@@ -135,7 +135,7 @@ class FundENV(Env):
         self.winning = 0
         state_updater = Observe_State_Change()
         self.state = state_updater.state_update(winning=self.winning,
-                                                value=state_updater.log(self.value),
+                                                value=self.value,
                                                 data_list=[0 for _ in range(self.trader_amount)])
         data_collector = DataCollector()
         self.training_time = data_collector.time_cal(time_start=time_start, time_end=time_end)

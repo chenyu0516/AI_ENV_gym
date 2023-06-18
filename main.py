@@ -19,7 +19,6 @@ print(env.observation_space.sample())
 
 
 
-
 states = env.observation_space.shape
 actions = env.action_space.shape[0]
 
@@ -54,6 +53,7 @@ dqn.compile(Adam(learning_rate=1e-3, clipvalue=1.0), metrics=['mae'])
 
 
 dqn.save_weights("D:\\python projects\\AI_env\\dqn_weights.h5f")
+
 dqn.load_weights('dqn_weights.h5f')
 
 
